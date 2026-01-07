@@ -6,33 +6,27 @@
     <title>RBS SCORE - Resultados ao Vivo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
 </head>
 <body>
 
     <header class="navbar">
-    <div class="navbar-container">
-        <div class="menu-mobile-btn" onclick="toggleMenu()">
-            <i class="fa-solid fa-bars"></i>
+        <div class="navbar-container">
+            <div class="menu-mobile-btn" onclick="toggleMenu()">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+            <div class="logo-container">
+                <img src="favicon.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/53/53283.png'" alt="RBS Logo" class="logo">
+                <span class="logo-text">RBS SCORE</span>
+            </div>
+            <div class="search-container">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="input-busca" placeholder="Pesquisar times, ligas ou jogos...">
+            </div>
+            <button class="btn-login">LOGIN</button>
         </div>
+    </header>
 
-        <div class="logo-container">
-            <img src="D:\Projects\HTML\RBSSCORER\favicon.png" alt="RBS Logo" class="logo">
-            <span class="logo-text">RBS SCORE</span>
-        </div>
-        
-        <div class="search-container">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="input-busca" placeholder="Pesquisar times, ligas ou jogos...">
-        </div>
-        
-        <button class="btn-login">LOGIN</button>
-    </div>
-</header>
-
-<div class="menu-overlay" id="overlay" onclick="toggleMenu()"></div>
-
-        
+    <div class="menu-overlay" id="overlay" onclick="toggleMenu()"></div>
 
     <nav class="sports-bar">
         <div class="sports-container">
@@ -47,121 +41,113 @@
     </nav>
 
     <div class="main-layout">
-        <aside class="sidebar">
-            <div class="table-container">
-                <table class="league-table">
-                    <thead>
-                        <tr><th colspan="3">LIGAS PRINCIPAIS</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="br.png"></td>
-                            <td><span>Brasileirão Série A</span><small>Brasil</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
-                        <tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="br2.png"></td>
-                            <td><span>Brasileirão Série B</span><small>Brasil</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td></tr>
-                         <tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="cb.png"></td>
-                            <td><span>Copa do Brasil</span><small>Brasil</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td><tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="en.png"></td>
-                            <td><span>Premier League</span><small>Inglaterra</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
-                        </tr>
-                        <tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="es.png"></td>
-                            <td><span>La Liga</span><small>Espanha</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
-                        </tr>
-                        <tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="eu.png"></td>
-                            <td><span>Champions League</span><small>Europa</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
-                        </tr>
-                        <tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="it.png"></td>
-                            <td><span>Série A</span><small>Itália</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
-                        </tr>
-                        <tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="al.png"></td>
-                            <td><span>Bundesliga</span><small>Alemanha</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
-                        </tr>
-                        <tr onclick="location.href='#'">
-                            <td class="td-icon"><img src="fr.png"></td>
-                            <td><span>Ligue 1</span><small>França</small></td>
-                            <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
-                        </tr>
-                       
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </aside>
+        <aside class="sidebar" id="sidebar">
+    <div class="table-container">
+        <table class="league-table">
+            <thead>
+                <tr><th colspan="3">LIGAS PRINCIPAIS</th></tr>
+            </thead>
+            <tbody>
+                <tr onclick="filtrarLiga('BSA')"> <td class="td-icon"><img src="br.png" alt="Brasileirão"></td>
+                    <td><span>Brasileirão Série A</span><small>Brasil</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+                
+                <tr onclick="location.href='#'">
+                    <td class="td-icon"><img src="br2.png" alt="Série B"></td>
+                    <td><span>Brasileirão Série B</span><small>Brasil</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+
+                <tr onclick="location.href='#'">
+                    <td class="td-icon"><img src="cb.png" alt="Copa do Brasil"></td>
+                    <td><span>Copa do Brasil</span><small>Brasil</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+
+                <tr onclick="location.href='#'">
+                    <td class="td-icon"><img src="en.png" alt="Premier League"></td>
+                    <td><span>Premier League</span><small>Inglaterra</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+
+                <tr onclick="location.href='#'">
+                    <td class="td-icon"><img src="es.png" alt="La Liga"></td>
+                    <td><span>La Liga</span><small>Espanha</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+
+                <tr onclick="location.href='#'">
+                    <td class="td-icon"><img src="eu.png" alt="Champions"></td>
+                    <td><span>Champions League</span><small>Europa</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+
+                <tr onclick="location.href='#'">
+                    <td class="td-icon"><img src="it.png" alt="Serie A"></td>
+                    <td><span>Série A</span><small>Itália</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+
+                <tr onclick="location.href='#'">
+                    <td class="td-icon"><img src="al.png" alt="Bundesliga"></td>
+                    <td><span>Bundesliga</span><small>Alemanha</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+
+                <tr onclick="location.href='#'">
+                    <td class="td-icon"><img src="fr.png" alt="Ligue 1"></td>
+                    <td><span>Ligue 1</span><small>França</small></td>
+                    <td class="td-arrow"><i class="fa-solid fa-chevron-right"></i></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</aside>
 
         <main class="content">
             <div class="date-bar-wrapper">
-    <div class="date-bar" id="date-bar">
-        </div>
-    <div class="calendar-btn-container">
-        <i class="fa-regular fa-calendar-days"></i>
-    </div>
-</div>
+                <div class="date-bar" id="date-bar"></div>
+                <div class="calendar-btn-container">
+                    <i class="fa-regular fa-calendar-days"></i>
+                    <input type="date" id="calendario-escolher">
+                </div>
+            </div>
 
             <nav class="game-filter">
-                <a href="#" class="filter-item active">Todos os jogos</a>
-                <a href="#" class="filter-item">Ao vivo</a>
-                <a href="#" class="filter-item">Meus jogos</a>
+                <a href="#" class="filter-item active" id="btn-todos">Todos os jogos</a>
+                <a href="#" class="filter-item" id="btn-ao-vivo">Ao vivo</a>
+                <a href="#" class="filter-item" id="btn-meus-jogos">Meus jogos</a>
             </nav>
 
             <div id="container-jogos">
-                <p style="text-align:center; color:var(--texto);">Carregando jogos de hoje...</p>
+                <p style="text-align:center; color:gray; padding:40px;">Carregando partidas...</p>
             </div>
-
         </main>
-    </div>
-
+    </div> 
+    
     <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-col about">
-                <img src="D:\Projects\HTML\RBSSCORER\favicon-32x32.png" class="footer-logo">
-                <p>O melhor sistema de resultados em tempo real.</p>
+    <div class="footer-container">
+        <div class="footer-col about">
+            <div class="logo-footer-wrapper">
+                <img src="favicon-32x32.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/53/53283.png'" alt="RBS Logo">
+                <h3>RBS SCORE</h3>
             </div>
+            <p>O melhor sistema de resultados em tempo real.</p>
+        </div>
 
-            <div class="footer-col benefits-centered">
-                <h4>Por que escolher o <span class="green">RBS Score?</span></h4>
-                <div class="cards-row">
-                    <div class="mini-card">
-                        <i class="fa-solid fa-chart-line"></i>
-                        <div class="mini-text"><strong>Análise</strong><p>Dados precisos</p></div>
-                    </div>
-                    <div class="mini-card">
-                        <i class="fa-solid fa-rocket"></i>
-                        <div class="mini-text"><strong>Performance</strong><p>Resultados rápidos</p></div>
-                    </div>
-                    <div class="mini-card">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        <div class="mini-text"><strong>Segurança</strong><p>Proteção total</p></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="footer-col social-right">
-                <div class="social-wrapper">
-                    <h4>Siga-nos</h4>
-                    <div class="social-icons">
-                        <i class="fa-brands fa-instagram"></i>
-                        <i class="fa-brands fa-discord"></i>
-                        <i class="fa-brands fa-x-twitter"></i>
-                    </div>
-                </div>
+        <div class="footer-col social-right">
+            <h4>Siga-nos</h4>
+            <div class="social-icons">
+                <i class="fa-brands fa-instagram"></i>
+                <i class="fa-brands fa-discord"></i>
+                <i class="fa-brands fa-x-twitter"></i>
             </div>
         </div>
-        <div class="copyright">© 2026 RBS Score. Todos os direitos reservados.</div>
-    </footer>
+    </div>
+    <div class="copyright">© 2026 RBS Score. Todos os direitos reservados.</div>
+</footer>
 
+    <script src="script.js"></script>
 </body>
 </html>
