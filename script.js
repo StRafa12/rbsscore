@@ -197,7 +197,6 @@ function renderizarPartidas(matches) {
         container.innerHTML += leagueHtml;
     }
 }
-
 function toggleMenu() {
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('overlay');
@@ -206,4 +205,35 @@ function toggleMenu() {
     overlay.classList.toggle('active');
 }
 
-carregarJogos();
+async function carregarJogos() { 
+    // Função para inicializar a pesquisa
+function inicializarPesquisa() {
+    const campoBusca = document.getElementById('input-busca');
+    
+    if (!campoBusca) return; // Segurança caso o elemento não exista
+
+    campoBusca.addEventListener('input', () => {
+        const termo = campoBusca.value.toLowerCase().trim();
+
+        // Se a busca estiver vazia, volta para "Todos os Jogos"
+        if (termo === "") {
+            renderizarPartidas(todosOsJogos);
+            return;
+        }
+
+        const filtrados = todosOsJogos.filter(jogo => {
+            const casa = jogo.homeTeam.name.toLowerCase();
+            const fora = jogo.awayTeam.name.toLowerCase();
+            const liga = (jogo.competition ? jogo.competition.name : jogo.leagueName).toLowerCase();
+            
+            return casa.includes(termo) || fora.includes(termo) || liga.includes(termo);
+        });
+
+        renderizarPartidas(filtrados);
+    });
+}
+
+// Chame esta função dentro da sua função carregarJogos(), 
+// logo após renderizar os primeiros jogos.
+};
+
