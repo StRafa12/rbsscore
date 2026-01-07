@@ -1,40 +1,74 @@
-const API_TOKEN = 'GET https://api.football-data.org/v4/matches'; 
-let todosOsJogos = []; 
+// 1. CONFIGURAÇÕES INICIAIS
+// Substitua o texto abaixo pela sua chave real que você recebe por e-mail no site Football-Data.org
+const API_KEY = 'GET https://api.football-data.org/v4/matches'; 
+
+let todosOsJogos = [];
 let ligasFavoritas = JSON.parse(localStorage.getItem('rbs_favoritos')) || [];
 
-async function carregarJogos() {
-    if (!API_TOKEN) {
-        todosOsJogos = obterDadosSimulados();
-        renderizarPartidas(todosOsJogos);
-    } else {
-        try {
-            const response = await fetch('https://api.football-data.org/v4/matches', {
-                method: 'GET',
-                headers: { 'X-Auth-Token': API_TOKEN }
-            });
-            const data = await response.json();
-            todosOsJogos = data.matches;
-            renderizarPartidas(todosOsJogos);
-        } catch (error) {
-            todosOsJogos = obterDadosSimulados();
-            renderizarPartidas(todosOsJogos);
+// 2. FUNÇÃO DE INICIALIZAÇÃO (APENAS UMA!)
+async function iniciarApp() {
+    console.log("Iniciando aplicação...");
+    
+    try {
+        // Tentativa de buscar dados reais da API
+        const response = await fetch('https://api.football-data.org/v4/matches', {
+            headers: { 'X-Auth-Token': API_KEY }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erro na API: ${response.status}`);
         }
+
+        const data = await response.json();
+        
+        if (data.matches && data.matches.length > 0) {
+            // Mapeia os dados da API para o formato do seu site
+            todosOsJogos = data.matches.map(m => ({
+                leagueName: m.competition.name,
+                status: m.status,
+                homeTeam: { 
+                    name: m.homeTeam.tla || m.homeTeam.name, 
+                    crest: m.homeTeam.crest // A API fornece o link da imagem
+                },
+                awayTeam: { 
+                    name: m.awayTeam.tla || m.awayTeam.name, 
+                    crest: m.awayTeam.crest 
+                },
+                score: { 
+                    home: m.score.fullTime.home ?? 0, 
+                    away: m.score.fullTime.away ?? 0 
+                }
+            }));
+            console.log("Dados carregados da API com sucesso.");
+        } else {
+            throw new Error("Nenhum jogo encontrado na API hoje.");
+        }
+    } catch (error) {
+        console.warn("Falha ao acessar API, usando dados simulados:", error.message);
+        todosOsJogos = obterDadosSimulados();
     }
+    
+    // Após definir os jogos (reais ou simulados), renderiza e ativa funções
+    renderizarPartidas(todosOsJogos);
+    configurarBusca();
     configurarFiltros();
 }
 
+// 3. FUNÇÃO DE RENDERIZAÇÃO
 function renderizarPartidas(matches) {
     const container = document.getElementById('container-jogos');
-    container.innerHTML = ''; 
+    if (!container) return;
+    
+    container.innerHTML = '';
 
     if (matches.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--texto); padding:20px;">Nenhum jogo encontrado.</p>';
+        container.innerHTML = '<p style="text-align:center; color:white; padding:20px;">Nenhum jogo encontrado.</p>';
         return;
     }
 
     const ligas = {};
     matches.forEach(jogo => {
-        const nomeLiga = jogo.competition ? jogo.competition.name : jogo.leagueName;
+        const nomeLiga = jogo.leagueName;
         if (!ligas[nomeLiga]) ligas[nomeLiga] = [];
         ligas[nomeLiga].push(jogo);
     });
@@ -42,10 +76,10 @@ function renderizarPartidas(matches) {
     for (let nomeLiga in ligas) {
         const isFavorita = ligasFavoritas.includes(nomeLiga);
         const estrelaClass = isFavorita ? 'fa-solid' : 'fa-regular';
-        const estrelaColor = isFavorita ? 'style="color: var(--verde);"' : '';
+        const estrelaColor = isFavorita ? 'style="color: #00ff88;"' : '';
 
         let leagueHtml = `
-            <div class="match-section" data-liga="${nomeLiga}">
+            <div class="match-section">
                 <div class="league-header">
                     <i class="${estrelaClass} fa-star btn-favorito" ${estrelaColor} onclick="alternarFavorito('${nomeLiga}')"></i> 
                     ${nomeLiga.toUpperCase()}
@@ -54,13 +88,12 @@ function renderizarPartidas(matches) {
         `;
 
         ligas[nomeLiga].forEach(m => {
-            const statusLabel = m.status === 'FINISHED' ? 'Final' : 'Ao Vivo';
             leagueHtml += `
                 <div class="match-row">
-                    <div class="match-status">${statusLabel}</div>
+                    <div class="match-status">${m.status === 'FINISHED' ? 'Final' : 'Ao Vivo'}</div>
                     <div class="teams-col">
-                        <div class="team-line"><img src="${m.homeTeam.crest}"> ${m.homeTeam.name} <strong>${m.score.fullTime.home ?? 0}</strong></div>
-                        <div class="team-line"><img src="${m.awayTeam.crest}"> ${m.awayTeam.name} <strong>${m.score.fullTime.away ?? 0}</strong></div>
+                        <div class="team-line"><img src="${m.homeTeam.crest}" onerror="this.src='favicon.png'"> ${m.homeTeam.name} <strong>${m.score.home}</strong></div>
+                        <div class="team-line"><img src="${m.awayTeam.crest}" onerror="this.src='favicon.png'"> ${m.awayTeam.name} <strong>${m.score.away}</strong></div>
                     </div>
                 </div>
             `;
@@ -70,7 +103,43 @@ function renderizarPartidas(matches) {
     }
 }
 
-// FUNÇÃO PARA FAVORITAR/DESFAVORITAR
+// 4. CONFIGURAÇÃO DA BUSCA
+function configurarBusca() {
+    const campoBusca = document.getElementById('input-busca');
+    if (!campoBusca) return;
+
+    // Remove ouvintes antigos para não duplicar
+    campoBusca.replaceWith(campoBusca.cloneNode(true));
+    const novoCampoBusca = document.getElementById('input-busca');
+
+    novoCampoBusca.addEventListener('input', () => {
+        const termo = novoCampoBusca.value.toLowerCase().trim();
+        const filtrados = todosOsJogos.filter(j => {
+            return j.homeTeam.name.toLowerCase().includes(termo) || 
+                   j.awayTeam.name.toLowerCase().includes(termo) || 
+                   j.leagueName.toLowerCase().includes(termo);
+        });
+        renderizarPartidas(filtrados);
+    });
+}
+
+// 5. FILTROS E FAVORITOS
+function configurarFiltros() {
+    const botoes = document.querySelectorAll('.filter-item');
+    botoes.forEach(btn => {
+        btn.onclick = (e) => {
+            e.preventDefault();
+            botoes.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const texto = btn.innerText.trim();
+            if (texto === "Todos os jogos") renderizarPartidas(todosOsJogos);
+            if (texto === "Ao vivo") renderizarPartidas(todosOsJogos.filter(j => j.status === 'IN_PLAY' || j.status === 'LIVE'));
+            if (texto === "Meus jogos") renderizarPartidas(todosOsJogos.filter(j => ligasFavoritas.includes(j.leagueName)));
+        };
+    });
+}
+
 function alternarFavorito(nomeLiga) {
     if (ligasFavoritas.includes(nomeLiga)) {
         ligasFavoritas = ligasFavoritas.filter(l => l !== nomeLiga);
@@ -78,162 +147,33 @@ function alternarFavorito(nomeLiga) {
         ligasFavoritas.push(nomeLiga);
     }
     localStorage.setItem('rbs_favoritos', JSON.stringify(ligasFavoritas));
-    
-    // Recarrega a visualização atual para atualizar as estrelas
-    const filtroAtivo = document.querySelector('.filter-item.active').innerText.trim();
-    aplicarFiltro(filtroAtivo);
+    renderizarPartidas(todosOsJogos);
 }
 
-function configurarFiltros() {
-    const filtros = document.querySelectorAll('.filter-item');
-    filtros.forEach(filtro => {
-        filtro.addEventListener('click', (e) => {
-            e.preventDefault();
-            filtros.forEach(f => f.classList.remove('active'));
-            filtro.classList.add('active');
-            aplicarFiltro(filtro.innerText.trim());
-        });
-    });
+function toggleMenu() {
+    document.querySelector('.sidebar').classList.toggle('active');
+    document.getElementById('overlay').classList.toggle('active');
 }
 
-function aplicarFiltro(tipo) {
-    if (tipo === "Todos os jogos") {
-        renderizarPartidas(todosOsJogos);
-    } else if (tipo === "Ao vivo") {
-        const aoVivo = todosOsJogos.filter(j => j.status === 'IN_PLAY' || j.status === 'LIVE');
-        renderizarPartidas(aoVivo);
-    } else if (tipo === "Meus jogos") {
-        const favoritos = todosOsJogos.filter(j => {
-            const nomeLiga = j.competition ? j.competition.name : j.leagueName;
-            return ligasFavoritas.includes(nomeLiga);
-        });
-        renderizarPartidas(favoritos);
-    }
-}
-
+// 6. DADOS SIMULADOS (Caso a API falhe ou exceda o limite)
 function obterDadosSimulados() {
     return [
         {
             leagueName: "BRASIL: Copinha",
             status: "FINISHED",
-            homeTeam: { name: "América SP Sub-20", crest: "t1.png" },
-            awayTeam: { name: "Inter de Limeira Sub-20", crest: "t2.png" },
-            score: { fullTime: { home: 0, away: 0 } }
+            homeTeam: { name: "América SP", crest: "Am.png" },
+            awayTeam: { name: "Inter Limeira", crest: "interdelimeira.png" },
+            score: { home: 0, away: 2 }
         },
         {
-            leagueName: "INGLATERRA: Premier League",
+            leagueName: "ALEMANHA: Bundesliga",
             status: "IN_PLAY",
-            homeTeam: { name: "Arsenal", crest: "t3.png" },
-            awayTeam: { name: "Liverpool", crest: "t4.png" },
-            score: { fullTime: { home: 1, away: 1 } }
+            homeTeam: { name: "Bayern", crest: "al.png" },
+            awayTeam: { name: "Dortmund", crest: "al.png" },
+            score: { home: 1, away: 1 }
         }
     ];
 }
 
-// Crie um objeto para guardar os placares anteriores e comparar
-let placaresAnteriores = {};
-
-// Função para tocar o som de alerta (você pode usar um link de áudio curto)
-function tocarAlertaGol() {
-    const audio = new Audio('https://www.soundjay.com/buttons/sounds/button-09.mp3'); 
-    audio.play().catch(e => console.log("Áudio bloqueado pelo navegador até interação do usuário."));
-}
-
-function renderizarPartidas(matches) {
-    const container = document.getElementById('container-jogos');
-    container.innerHTML = ''; 
-
-    const ligas = {};
-    matches.forEach(jogo => {
-        const idJogo = jogo.id || `${jogo.homeTeam.name}-${jogo.awayTeam.name}`;
-        const placarAtual = `${jogo.score.fullTime.home}-${jogo.score.fullTime.away}`;
-
-        // VERIFICA SE HOUVE GOL (Comparando com o placar anterior)
-        if (placaresAnteriores[idJogo] && placaresAnteriores[idJogo] !== placarAtual) {
-            tocarAlertaGol();
-            // Aqui poderíamos disparar o efeito visual
-        }
-        placaresAnteriores[idJogo] = placarAtual;
-
-        const nomeLiga = jogo.competition ? jogo.competition.name : jogo.leagueName;
-        if (!ligas[nomeLiga]) ligas[nomeLiga] = [];
-        ligas[nomeLiga].push(jogo);
-    });
-
-    for (let nomeLiga in ligas) {
-        const isFavorita = ligasFavoritas.includes(nomeLiga);
-        const estrelaClass = isFavorita ? 'fa-solid' : 'fa-regular';
-        
-        let leagueHtml = `
-            <div class="match-section">
-                <div class="league-header">
-                    <i class="${estrelaClass} fa-star btn-favorito" onclick="alternarFavorito('${nomeLiga}')"></i> 
-                    ${nomeLiga.toUpperCase()}
-                </div>
-                <div class="match-list">
-        `;
-
-        ligas[nomeLiga].forEach(m => {
-            const statusLabel = m.status === 'FINISHED' ? 'Final' : 'Ao Vivo';
-            const statusClass = m.status === 'IN_PLAY' ? 'style="color: var(--verde);"' : '';
-
-            leagueHtml += `
-                <div class="match-row">
-                    <div class="match-status" ${statusClass}>${statusLabel}</div>
-                    <div class="teams-col">
-                        <div class="team-line">
-                            <img src="${m.homeTeam.crest}"> ${m.homeTeam.name} 
-                            <strong class="placar-animar">${m.score.fullTime.home ?? 0}</strong>
-                        </div>
-                        <div class="team-line">
-                            <img src="${m.awayTeam.crest}"> ${m.awayTeam.name} 
-                            <strong class="placar-animar">${m.score.fullTime.away ?? 0}</strong>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        leagueHtml += `</div></div>`;
-        container.innerHTML += leagueHtml;
-    }
-}
-function toggleMenu() {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.getElementById('overlay');
-    
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
-}
-
-async function carregarJogos() { 
-    // Função para inicializar a pesquisa
-function inicializarPesquisa() {
-    const campoBusca = document.getElementById('input-busca');
-    
-    if (!campoBusca) return; // Segurança caso o elemento não exista
-
-    campoBusca.addEventListener('input', () => {
-        const termo = campoBusca.value.toLowerCase().trim();
-
-        // Se a busca estiver vazia, volta para "Todos os Jogos"
-        if (termo === "") {
-            renderizarPartidas(todosOsJogos);
-            return;
-        }
-
-        const filtrados = todosOsJogos.filter(jogo => {
-            const casa = jogo.homeTeam.name.toLowerCase();
-            const fora = jogo.awayTeam.name.toLowerCase();
-            const liga = (jogo.competition ? jogo.competition.name : jogo.leagueName).toLowerCase();
-            
-            return casa.includes(termo) || fora.includes(termo) || liga.includes(termo);
-        });
-
-        renderizarPartidas(filtrados);
-    });
-}
-
-// Chame esta função dentro da sua função carregarJogos(), 
-// logo após renderizar os primeiros jogos.
-};
-
+// EXECUÇÃO
+iniciarApp();
